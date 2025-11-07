@@ -3,6 +3,7 @@ from discord.ext import commands
 import dotenv
 import os
 import csv
+import random
 ### get discord token ###
 dotenv.load_dotenv()
 TOKEN = os.getenv('TOKEN')
@@ -35,6 +36,18 @@ with open(file_name, mode='r') as file:
 
 # food type selection
 
+# TODO
+# 1. add functionalit to check for duplicate selections
+# 2. improve loop to reduce memory usage (only append indexes instead of entire rows)
+def random_select(type : str, location : str):
+    candidates = []
+    for row in data:
+        if (row[1] == type and row[2] == location):
+            candidates.append(row)
+    num = random.randint(0, len(candidates) - 1)
+    return candidates[num]
+    
+
 class SelectType(discord.ui.Select):
     def __init__(self):
         options = []
@@ -46,7 +59,10 @@ class SelectType(discord.ui.Select):
         parameter_type = self.values[0]
         await interaction.response.send_message(content=f"{parameter_type}을 선택하셨습니다.")
         if (parameter_type != None and parameter_location != None):
-            print(f"Both parameters entered : {parameter_type} and {parameter_location}")
+            #print(f"Both parameters entered : {parameter_type} and {parameter_location}") -> currently here for testing purposes
+            ans = random_select(parameter_type, parameter_location)
+            await interaction.followup.send(ans[0] + ' | ' + ans[6])
+
 
 #location selection
 class SelectLocation(discord.ui.Select):
@@ -60,7 +76,9 @@ class SelectLocation(discord.ui.Select):
         parameter_location = self.values[0]
         await interaction.response.send_message(content=f"{parameter_location}을 선택하셨습니다.")
         if (parameter_type != None and parameter_location != None):
-            print(f"Both parameters entered : {parameter_type} and {parameter_location}")
+            #print(f"Both parameters entered : {parameter_type} and {parameter_location}") -> currently here for testing purposes
+            ans = random_select(parameter_type, parameter_location)
+            await interaction.followup.send(ans[0] + ' | ' + ans[6])
 
 # view object for the two select dropdowns
 class SelectView(discord.ui.View):
