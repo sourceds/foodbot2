@@ -2,7 +2,8 @@ import discord
 from discord.ext import commands
 import dotenv
 import os
-
+import csv
+### get discord token ###
 dotenv.load_dotenv()
 TOKEN = os.getenv('TOKEN')
 
@@ -16,12 +17,24 @@ list_type = ['한식', '중식', '일식', '양식', '간식', '기타']
 list_location = ['신촌', '홍대', '합정', '마포', '서강']
 prefix = '미식봇! '
 
+
+### setup bot ###
 bot = commands.Bot(command_prefix=prefix, intents=discord.Intents.all())
 
+
+### setup data ###
+
+#TODO : integrate with Google Sheets for a more seamless experience,
+#       i.e. when you need to update the restaurant database
+
+file_name = os.getenv('DATA')
+with open(file_name, mode='r') as file:
+    data = list(csv.reader(file, delimiter=','))
 
 ######### Select components #########
 
 # food type selection
+
 class SelectType(discord.ui.Select):
     def __init__(self):
         options = []
