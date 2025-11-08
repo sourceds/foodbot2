@@ -29,34 +29,33 @@ prefix = '미식봇! '
 
 last_query_time = None
 
+#TODO : integrate with Google Sheets for a more seamless experience,
+#       i.e. when you need to update the restaurant database
+
+
 ### setup bot ###
 bot = commands.Bot(command_prefix=prefix, intents=discord.Intents.all())
 
-
 ### setup data ###
-
-#TODO : integrate with Google Sheets for a more seamless experience,
-#       i.e. when you need to update the restaurant database
 
 file_name = os.getenv('DATA')
 with open(file_name, mode='r') as file:
     data = list(csv.reader(file, delimiter=','))
-
-# input wait function
-
 
 # random restaurant selection
 # TODO
 # 1. add functionality to check for duplicate selections
 def random_select(type : str, location : str):
     
-    def check_criteria(type : str, location : str):
-        if (type == any_type and location == any_location):
+    def check_criteria(tp : str, loc : str):
+        if (tp == any_type and loc == any_location):
             return True
-        elif (type == any_type):
-            return row[2] == location
+        elif (tp == any_type):
+            return (row[2] == loc)
+        elif (loc == any_location):
+            return (row[1] == tp)
         else:
-            return row[1] == type
+            return (row[1] == tp and row[2] == loc)
 
     candidates = []
     for idx in range(0, len(data)):
@@ -70,23 +69,26 @@ def random_select(type : str, location : str):
     num = random.randint(0, len(candidates) - 1)
     return candidates[num]
 
+
+
 ######### Class components #########
+
 class LayoutView(discord.ui.LayoutView):
     def __init__(self, id : int) -> None:
         super().__init__() #pass id
-    
-        #self.thumbnail = discord.ui.Thumbnail(media='https://maimai.sega.jp/storage/area/region/kawaii2/icon/01.png')
 
-        title = discord.ui.TextDisplay('**' + data[id][0] + '**')
-        detail = discord.ui.TextDisplay(data[id][6])
+        title = discord.ui.TextDisplay('# ' + '[' + data[id][0] + ']' + '(' + data[id][8] + ')')
+        type = discord.ui.TextDisplay('메뉴 : ' + data[id][1])
+        location = discord.ui.TextDisplay('위치 : ' + data[id][2])
+        detail = discord.ui.TextDisplay('**' + data[id][6] + '**')
 
         if (data[id][9] != ''):
             media_source = data[id][9]
         else:
-            media_source = 'https://i.pinimg.com/736x/f9/c6/24/f9c624561595995676ffec4d360257e7.jpg'
+            media_source = 'https://img.icons8.com/ios_filled/1200/no-image.jpg' ##TODO : replace later
 
         gallery = discord.ui.MediaGallery(discord.MediaGalleryItem(media_source))
-        container = discord.ui.Container(title, detail, gallery)
+        container = discord.ui.Container(title, type, location, detail, gallery)
         self.add_item(container)
 
 
@@ -138,6 +140,10 @@ class SelectView(discord.ui.View):
         self.add_item(SelectLocation())
 
 
+#############################################
+
+
+
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
@@ -162,9 +168,13 @@ async def retry(ctx):
     elif ((current_query_time - last_query_time).total_seconds() >= 15.0):
         parameter_type = None
         parameter_location = None
-        await ctx.send("timeout due to inactivity")
     else:
         last_query_time = current_query_time
-        await ctx.send(view=LayoutView(random_select(parameter_type, parameter_location)))
+        print(f"Search with : {parameter_type}, {parameter_location}")
+        result = random_select(parameter_type, parameter_location)
+        if (result == -1):
+            await ctx.send("조건을 만족하는 식당이 없습니다.")
+        else:
+            await ctx.send(view=LayoutView(result))
     
 bot.run(TOKEN)
