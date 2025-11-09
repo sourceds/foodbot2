@@ -45,7 +45,9 @@ with open(file_name, mode='r') as file:
 # random restaurant selection
 # TODO
 # 1. add functionality to check for duplicate selections
-def random_select(type : str, location : str):
+
+# LEGACY : supports only food type & restaurant location
+def legacy_random_select(type : str, location : str):
     
     def check_criteria(tp : str, loc : str):
         if (tp == any_type and loc == any_location):
@@ -56,7 +58,6 @@ def random_select(type : str, location : str):
             return (row[1] == tp)
         else:
             return (row[1] == tp and row[2] == loc)
-
     candidates = []
     for idx in range(0, len(data)):
         row = data[idx]
@@ -69,7 +70,34 @@ def random_select(type : str, location : str):
     num = random.randint(0, len(candidates) - 1)
     return candidates[num]
 
+def random_select(params : dict):
 
+    for key, val in params.items():
+        if type(val) == int:
+            params[key] = str(val)
+        
+    candidates = []
+    for idx in range(0, len(data)):
+        row = data[idx]
+        flag = True
+        for key, val in params.items():
+            if key == 1 and val == any_type:
+                continue
+            elif key == 2 and val == any_location:
+                continue
+            else:
+                if row[key] == val:
+                    continue
+                else:
+                    flag = False
+                    break
+        if flag == True:
+            candidates.append(idx)
+    if len(candidates) == 0:
+        return -1; #no restaurants matching criteria found
+
+    num = random.randint(0, len(candidates) - 1)
+    return candidates[num]
 
 ######### Class components #########
 
@@ -105,7 +133,7 @@ class SelectType(discord.ui.Select):
         if (parameter_type != None and parameter_location != None):
             #print(f"Both parameters entered : {parameter_type} and {parameter_location}") -> currently here for testing purposes
             last_query_time = datetime.datetime.now()
-            ans = random_select(parameter_type, parameter_location)
+            ans = random_select({1 : parameter_type, 2 : parameter_location})
             if (ans != -1):
                 await interaction.followup.send(view=LayoutView(ans))
             else:
@@ -126,7 +154,7 @@ class SelectLocation(discord.ui.Select):
         if (parameter_type != None and parameter_location != None):
             #print(f"Both parameters entered : {parameter_type} and {parameter_location}") -> currently here for testing purposes
             last_query_time = datetime.datetime.now()
-            ans = random_select(parameter_type, parameter_location)
+            ans = random_select({1 : parameter_type, 2 : parameter_location})
             if (ans != -1):
                 await interaction.followup.send(view=LayoutView(ans))
             else:
@@ -155,10 +183,6 @@ async def what_to_eat(ctx):
     parameter_location = None
     await ctx.send(view=SelectView())
 
-@bot.command(name='test')
-async def test(ctx):
-    await ctx.send(view=LayoutView(random.randint(0, len(data)-1)))
-
 @bot.command(name='다시!')
 async def retry(ctx):
     global parameter_type, parameter_location, last_query_time
@@ -170,11 +194,26 @@ async def retry(ctx):
         parameter_location = None
     else:
         last_query_time = current_query_time
-        print(f"Search with : {parameter_type}, {parameter_location}")
-        result = random_select(parameter_type, parameter_location)
+        result = legacy_random_select(parameter_type, parameter_location)
         if (result == -1):
             await ctx.send("조건을 만족하는 식당이 없습니다.")
         else:
             await ctx.send(view=LayoutView(result))
     
+@bot.command(name='술', alias=['술!'])
+async def alcohol(ctx):
+    ans = random_select({5 : 1})
+    if (ans != -1):
+        await ctx.send(view=LayoutView(ans))
+    else:
+        await ctx.send("조건을 만족하는 식당이 없습니다.")
+
+@bot.command(name='test')
+async def test(ctx):
+    #await ctx.send(view=LayoutView(random.randint(0, len(data)-1)))
+    ans = random_select({1 : '아무거나', 2 : '홍대'})
+    if (ans != -1):
+        await ctx.send(view=LayoutView(ans))
+    else:
+        await ctx.send("조건을 만족하는 식당이 없습니다.")
 bot.run(TOKEN)
