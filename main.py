@@ -214,6 +214,10 @@ class HelpLayoutView(discord.ui.LayoutView):
 async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
 
+@bot.command(name='hi', aliases=["ㅎㅇ", "안녕"])
+async def hi(ctx):
+    await ctx.send("안뇽!")
+
 @bot.command(name='what', aliases=['뭐먹지?'])
 async def what_to_eat(ctx):
     global parameter_type, parameter_location
@@ -241,15 +245,6 @@ async def retry(ctx):
 @bot.command(name='alcohol', aliases=['술', '술!'])
 async def alcohol(ctx):
     ans = random_select({5 : 1})
-    if (ans != -1):
-        await ctx.send(view=SelectLayoutView(ans))
-    else:
-        await ctx.send("조건을 만족하는 식당이 없습니다.")
-
-@bot.command(name='test')
-async def test(ctx):
-    #await ctx.send(view=LayoutView(random.randint(0, len(data)-1)))
-    ans = random_select({1 : '아무거나', 2 : '홍대'})
     if (ans != -1):
         await ctx.send(view=SelectLayoutView(ans))
     else:
