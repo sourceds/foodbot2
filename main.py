@@ -42,9 +42,13 @@ bot = commands.Bot(command_prefix=prefix, intents=discord.Intents.all())
 
 ### setup data ###
 
-file_name = os.getenv('DATA')
-with open(file_name, mode='r') as file:
-    data = list(csv.reader(file, delimiter=','))
+def load_data():
+    global data, file_name
+    file_name = os.getenv('DATA')
+    with open(file_name, mode='r') as file:
+        data = list(csv.reader(file, delimiter=','))
+
+load_data()
 
 # random restaurant selection
 # TODO
@@ -182,9 +186,6 @@ class AboutLayoutView(discord.ui.LayoutView):
         version =  discord.ui.TextDisplay("DX1.0")
         create1 = discord.ui.TextDisplay("미식봇 DX by srcds")
         create2 = discord.ui.TextDisplay("미식봇 Origial by @Charlie_Lee_Rhee")
-        #media_source = 'https://img.icons8.com/ios_filled/1200/no-image.jpg' ##TODO : replace later
-
-        #gallery = discord.ui.MediaGallery(discord.MediaGalleryItem(media_source))
         container = discord.ui.Container(title, version, create1, create2)
         self.add_item(container)
 
@@ -258,5 +259,13 @@ async def about(ctx):
 async def help_menu(ctx):
     await ctx.send(view=HelpLayoutView())
 
+@bot.command(name='load', aliases=['갱신'])
+async def load(ctx):
+    await ctx.send("Loading restaurant data...")
+    load_data()
+    if data is False:
+        await ctx.send("Error: Could not update restaurant data")
+    else:
+        await ctx.send("Successfully updated restaurant data")
 
 bot.run(TOKEN)
